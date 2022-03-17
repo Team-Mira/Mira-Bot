@@ -9,7 +9,7 @@ client.on('ready', () => {
   console.log(`Bot initiated!`);
 });
 
-client.on("messageCreate", msg => {
+client.on("messageCreate", async (msg) => {
   const { guildId, channelId, author, id, content, mentions } = msg
   const isReply = msg.type === 'REPLY' ? true : false
   const repliedUser = msg.mentions.repliedUser === null ? null : msg.mentions.repliedUser.id
@@ -50,25 +50,40 @@ client.on("messageCreate", msg => {
       channel,
     }
 
-    axios.post(`${address}/api/message/add`, body)
+    try {
+      const { data } = await axios.post(`${address}/api/message/add`, body)
+      console.log(data)
+    } catch(error) {
+      console.log(error.code)
+    }
   }
 })
 
-client.on('messageDelete', msg => {
+client.on('messageDelete', async (msg) => {
   const { id } = msg
-  // axios.delete('https://mira-api-cs.herokuapp.com/api/message/delete', { data: { id }})
-  axios.delete(`${address}/api/message/delete`, { data: { id }})
+
+  try {
+    const { data } = await axios.delete(`${address}/api/message/delete`, { data: { id }})
+    console.log(data)
+  } catch(error) {
+    console.log(error.code)
+  }
 })
 
-client.on('messageUpdate', msg => {
+client.on('messageUpdate', async (msg) => {
   const { id } = msg
   const { content } = msg.reactions.message
 
-  axios.put(`${address}/api/message/update`, { id, content })
+  try {
+    const { data } = await axios.put(`${address}/api/message/update`, { id, content })
+    console.log(data)
+  } catch(error) {
+    console.log(error.code)
+  }
 })
 
 
-client.on('messageReactionAdd', (reaction, user) => {
+client.on('messageReactionAdd', async (reaction, user) => {
   const message = {
     id: reaction.message.id,
     userId: reaction.message.author.id
@@ -76,7 +91,8 @@ client.on('messageReactionAdd', (reaction, user) => {
 
   const emoji = {
     id: reaction.emoji.id,
-    name: reaction.emoji.name
+    name: reaction.emoji.name,
+    animated: reaction.emoji.animated ? true : false
   }
 
   const reactor = {
@@ -91,10 +107,15 @@ client.on('messageReactionAdd', (reaction, user) => {
     reactor
   }
 
-  axios.put(`${address}/api/message/reaction/add`, body)
+  try {
+    const { data } = await axios.put(`${address}/api/message/reaction/add`, body)
+    console.log(data)
+  } catch(error) {
+    console.log(error.code)
+  }
 })
 
-client.on('messageReactionRemove', (reaction, user)  => {
+client.on('messageReactionRemove', async (reaction, user)  => {
 
   const message = {
     id: reaction.message.id
@@ -114,7 +135,12 @@ client.on('messageReactionRemove', (reaction, user)  => {
     reactor
   }
 
-  axios.put(`${address}/api/message/reaction/remove`, body)
+  try {
+    const { data } = await axios.put(`${address}/api/message/reaction/remove`, body)
+    console.log(data)
+  } catch(error) {
+    console.log(error.code)
+  }
 })
 
 client.login(process.env.BOT_TOKEN)
