@@ -18,6 +18,35 @@ client.on("messageCreate", async (msg) => {
   mentions.users.each(user =>  mentionedUsers.push({name: user.username, id: user.id, avatar: user.displayAvatarURL()}))
 
   if(content !== '' && !(author.bot)){
+
+    const contentEmojis = content.match(/<a:.+?:\d+>|<:.+?:\d+>/g)
+
+    const emojis = []
+
+    if(contentEmojis){
+      contentEmojis.forEach((element) => {
+        const eFirstIndex = element.indexOf(':')
+        const eLastIndex = element.lastIndexOf(':')
+        const stringEnd = element.indexOf('>')
+
+        const emoji = {
+          name: element.slice(eFirstIndex + 1, eLastIndex),
+          id: element.slice(eLastIndex + 1, stringEnd)
+        }
+
+        if(element[1] === 'a'){
+          emoji.animated = true
+        } else {
+          emoji.animated = false
+        }
+
+        const fileExt = emoji.animated ? '.gif' : '.png'
+        emoji.url = `https://cdn.discordapp.com/emojis/${emoji.id}${fileExt}`
+
+        emojis.push(emoji)
+      })
+    }
+
     const user = {
       id: author.id,
       name: author.username,
@@ -30,7 +59,8 @@ client.on("messageCreate", async (msg) => {
       isReply,
       repliedUser,
       mentionedEveryone: mentions.everyone,
-      mentionedUsers
+      mentionedUsers,
+      emojis
     }
 
     const server = {
