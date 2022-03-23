@@ -11,8 +11,6 @@ const mentionAdd = require('./mentionAdd')
 
 async function messageAdd(msg){
 
-  msg.mentions.users.map(user => mentionAdd(user.id, msg.author.id, msg.id))
-
   const newMessage = messageExtract(msg)
 
   try {
@@ -21,6 +19,8 @@ async function messageAdd(msg){
   } catch(error) {
     console.log(error.code)
   }
+
+  msg.mentions.users.map(user => mentionAdd(user.id, msg.author.id, msg.id))
 }
 
 module.exports = messageAdd
