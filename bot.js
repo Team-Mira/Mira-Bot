@@ -1,176 +1,49 @@
-require('dotenv').config()
-const axios = require('axios');
 const { Client, Intents } = require('discord.js');
+
+// 32767 gives our client all intents. Should change as soon as we know
+// the exact scope our bot will need
 const intents = new Intents(32767);
 const client = new Client({ intents });
-const address = process.env.ADDRESS || 'http://localhost:8080'
+
+const messageAdd = require('./api/messageAdd')
+const messageDelete = require('./api/messageDelete')
+const messageUpdate = require('./api/messageUpdate')
+const reactionAdd = require('./api/reactionAdd')
+const reactionRemove = require('./api/reactionRemove')
 
 client.on('ready', () => {
   console.log(`Bot initiated!`);
 });
 
+
+/*
+  Creates event listeners for creating, updating, and deleting messages and
+  reactions. The axios calls are handled in the api folder.
+*/
 client.on("messageCreate", async (msg) => {
-  const { guildId, channelId, author, id, content, mentions } = msg
-  const isReply = msg.type === 'REPLY' ? true : false
-  const repliedUser = msg.mentions.repliedUser === null ? null : msg.mentions.repliedUser.id
-  const mentionedUsers = []
+  const { author, content } = msg
 
-  mentions.users.each(user =>  mentionedUsers.push({name: user.username, id: user.id, avatar: user.displayAvatarURL()}))
-
+  // The bot will not save empty messages or messages from other bots
   if(content !== '' && !(author.bot)){
-
-    const contentEmojis = content.match(/<a:.+?:\d+>|<:.+?:\d+>/g)
-
-    const emojis = []
-
-    if(contentEmojis){
-      contentEmojis.forEach((element) => {
-        const eFirstIndex = element.indexOf(':')
-        const eLastIndex = element.lastIndexOf(':')
-        const stringEnd = element.indexOf('>')
-
-        const emoji = {
-          name: element.slice(eFirstIndex + 1, eLastIndex),
-          id: element.slice(eLastIndex + 1, stringEnd)
-        }
-
-        if(element[1] === 'a'){
-          emoji.animated = true
-        } else {
-          emoji.animated = false
-        }
-
-        const fileExt = emoji.animated ? '.gif' : '.png'
-        emoji.url = `https://cdn.discordapp.com/emojis/${emoji.id}${fileExt}`
-
-        emojis.push(emoji)
-      })
-    }
-
-    const user = {
-      id: author.id,
-      name: author.username,
-      avatar: author.displayAvatarURL()
-    }
-
-    const message = {
-      id,
-      content,
-      isReply,
-      repliedUser,
-      mentionedEveryone: mentions.everyone,
-      mentionedUsers,
-      emojis
-    }
-
-    const server = {
-      id: guildId,
-      name: msg.guild.name
-    }
-
-    const channel = {
-      id: channelId,
-      name: msg.channel.name
-    }
-
-    const body = {
-      user,
-      message,
-      server,
-      channel,
-    }
-
-    try {
-      const { data } = await axios.post(`${address}/api/message/add`, body)
-      console.log(data)
-    } catch(error) {
-      console.log(error.code)
-    }
+    messageAdd(msg)
   }
 })
 
 client.on('messageDelete', async (msg) => {
-  const { id } = msg
-
-  try {
-    const { data } = await axios.delete(`${address}/api/message/delete`, { data: { id }})
-    console.log(data)
-  } catch(error) {
-    console.log(error.code)
-  }
+  messageDelete(msg)
 })
 
 client.on('messageUpdate', async (msg) => {
-  const { id } = msg
-  const { content } = msg.reactions.message
-
-  try {
-    const { data } = await axios.put(`${address}/api/message/update`, { id, content })
-    console.log(data)
-  } catch(error) {
-    console.log(error.code)
-  }
+  messageUpdate(msg)
 })
 
 
 client.on('messageReactionAdd', async (reaction, user) => {
-  const message = {
-    id: reaction.message.id,
-    userId: reaction.message.author.id
-  }
-
-  const emoji = {
-    id: reaction.emoji.id,
-    name: reaction.emoji.name,
-    animated: reaction.emoji.animated ? true : false
-  }
-
-  const reactor = {
-    id: user.id,
-    name: user.username,
-    avatar: user.displayAvatarURL()
-  }
-
-  const body = {
-    message,
-    emoji,
-    reactor
-  }
-
-  try {
-    const { data } = await axios.put(`${address}/api/message/reaction/add`, body)
-    console.log(data)
-  } catch(error) {
-    console.log(error.code)
-  }
+  reactionAdd(reaction, user)
 })
 
 client.on('messageReactionRemove', async (reaction, user)  => {
-
-  const message = {
-    id: reaction.message.id
-  }
-
-  const emoji = {
-    id: reaction.emoji.id,
-  }
-
-  const reactor = {
-    id: user.id
-  }
-
-  const body = {
-    message,
-    emoji,
-    reactor
-  }
-
-  try {
-    const { data } = await axios.put(`${address}/api/message/reaction/remove`, body)
-    console.log(data)
-  } catch(error) {
-    console.log(error.code)
-  }
+  reactionRemove(reaction, user)
 })
 
 client.login(process.env.BOT_TOKEN)
