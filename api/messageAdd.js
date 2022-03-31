@@ -14,13 +14,13 @@ async function messageAdd(msg){
   const newMessage = messageExtract(msg)
 
   try {
-    const { data } = await axios.post(`${address}/api/message/add`, { newMessage })
-    console.log(data)
+    const res = await axios.post(`${address}/api/message/add`, { newMessage })
+    if(res.status === 200){
+      msg.mentions.users.map(user => mentionAdd(user.id, msg.author.id, msg.id))
+    }
   } catch(error) {
     console.log(error.code)
   }
-
-  msg.mentions.users.map(user => mentionAdd(user.id, msg.author.id, msg.id))
 }
 
 module.exports = messageAdd
