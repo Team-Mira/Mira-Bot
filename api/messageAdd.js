@@ -15,6 +15,7 @@ async function messageAdd(msg){
 
   try {
     const res = await axios.post(`${address}/api/message/add`, { newMessage })
+    console.log(res.data)
     if(res.status === 200){
       msg.mentions.users.map(user => mentionAdd(user.id, msg.author.id, msg.id))
     }
